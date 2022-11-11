@@ -16,25 +16,29 @@ using namespace std;
 
 // Prototipos de funciones
 map<string, string> cargarUsuarios();
-void abirirVentana();
-string leerPassword(string palabra);
 string login(map<string, string> users);
 string validarUsr(map<string, string> users, int i);
+string leerPassword(string palabra);
 void pintarMenuRoot(map<string, string> users);
-void pintarMenuUsuario(map<string, string> users, string usr);
-bool validarEntrada(string cadena);
-map<string, string> cambiarPassword(map<string, string> users, string usr);
-map<string, string> cambiarPasswordUsuario(map<string, string> users);
 map<string, string> crearUsuario(map<string, string> users);
 map<string, string> borrarUsuario(map<string, string> users);
-string getFecha();
-string secuenciaGrafico(map<string, string> graficos);
-void crearGrafico();
+void listarAccesosPorUsuario(map<string, string> users);
+void listarAccesosTodosUsuarios(map<string, string> users);
+void imprimirGraficoRoot();
+map<string, string> cambiarPassword(map<string, string> users, string usr);
+map<string, string> cambiarPasswordUsuario(map<string, string> users);
+void pintarMenuUsuario(map<string, string> users, string usr);
+void crearGrafico(string usr);
 void borrarGrafico();
 void listarAccesos(string usr);
+void imprimirGrafico(string usr);
 void escribirArchivoGraficos(map<string, string> graficos);
 map<string, string> ordenarGraficosFechaAsc(map<string, string> graficos);
 map<string, string> ordenarGraficosFechaDes(map<string, string> graficos);
+string getFecha();
+string secuenciaGrafico(map<string, string> graficos);
+bool validarEntrada(string cadena);
+void abirirVentana();
 
 // Constantes
 const int WIDTH = 800, HEIGHT = 600;
@@ -92,10 +96,13 @@ void pintarMenuRoot(map<string, string> users){
                 users = borrarUsuario(users);
                 break;
             case 3:
+                listarAccesosPorUsuario(users);
                 break;
             case 4:
+                listarAccesosTodosUsuarios(users);
                 break;
             case 5:
+                void imprimirGraficoRoot();
                 break;
             case 6:
                 users = cambiarPassword(users, "root");
@@ -116,8 +123,10 @@ map<string, string> crearUsuario(map<string, string> users){
     cout << "Username: ";
     cin >> usr;
     if(!users.count(usr)){
+        // TODO validar que el usuario no tenga espacios en blanco.
         pwd = leerPassword("Password: ");
         if(pwd.length() > 3){
+            // TODO encriptar password.
             users[usr] = pwd;
             fstream fs;
             fs.open ("usuarios.txt", fstream::in | fstream::out | fstream::trunc);
@@ -164,14 +173,134 @@ map<string, string> borrarUsuario(map<string, string> users){
     return users;
 }
 
+// Opcion 3
+void listarAccesosPorUsuario(map<string, string> users){
+    string usr;
+    system("cls");
+    cout << "Aplicativo - Graficador - UTP" << endl;
+    cout << "Listado de acceso por usuario" << endl;
+    cout << "Entre el usuario: ";
+    cin >> usr;
+    if(users.count(usr)){
+        string usuario, fecha, nroGrafico, polinomio, orden;
+        map<string, string> graficos;
+        ifstream archivoGrafico ("graficos.txt");
+        if ( archivoGrafico.is_open() ) {
+            while ( archivoGrafico.good() ) {
+                archivoGrafico >> usuario;
+                archivoGrafico >> fecha;
+                archivoGrafico >> nroGrafico;
+                archivoGrafico >> polinomio;
+                if(usuario == usr){
+                    graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+                }
+            }
+        }
+        archivoGrafico.close();
+        cout << "Usuario: " << usr << endl;
+        cout << "Fecha Nro grafico Polinomio-F(x)" << endl;
+        cout << "________________________________" << endl;
+        if(graficos.empty()){
+            cout << "No existen registros." << endl;
+        }else{
+            graficos = ordenarGraficosFechaAsc(graficos);
+            for (pair<string, string> it : graficos) {
+                cout << it.second << endl;
+            }
+        }
+        cout << "--------------------------------" << endl;
+        cout << graficos.size() << " Registros" << endl;
+        cout << endl;
+    } else {
+        cout << "Usuario no existe." << endl;
+    }
+    system("pause"); 
+}
+
+// opcion 4
+void listarAccesosTodosUsuarios(map<string, string> users){
+    string usr;
+    system("cls");
+    cout << "Aplicativo - Graficador - UTP" << endl;
+    cout << "Listado de accesos todos los usuario" << endl;
+
+    for (pair<string, string> it : users) {
+        usr = it.first;
+        if(usr != "root"){
+            string usuario, fecha, nroGrafico, polinomio, orden;
+            map<string, string> graficos;
+            ifstream archivoGrafico ("graficos.txt");
+            if ( archivoGrafico.is_open() ) {
+                while ( archivoGrafico.good() ) {
+                    archivoGrafico >> usuario;
+                    archivoGrafico >> fecha;
+                    archivoGrafico >> nroGrafico;
+                    archivoGrafico >> polinomio;
+                    if(usuario == usr){
+                        graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+                    }
+                }
+            }
+            archivoGrafico.close();
+            cout << "Usuario: " << usr << endl;
+            cout << "Fecha Nro grafico Polinomio-F(x)" << endl;
+            cout << "________________________________" << endl;
+            if(graficos.empty()){
+                cout << "No existen registros." << endl;
+            }else{
+                graficos = ordenarGraficosFechaAsc(graficos);
+                for (pair<string, string> it : graficos) {
+                    cout << it.second << endl;
+                }
+            }
+            cout << "--------------------------------" << endl;
+            cout << graficos.size() << " Registros" << endl;
+            cout << endl;
+        }
+    }
+    system("pause"); 
+}
+
+// Opcion 5
+void imprimirGraficoRoot(){
+    string usuario, fecha, nroGrafico, polinomio, referencia;
+    map<string, string> graficos;
+    ifstream archivoGrafico ("graficos.txt");
+    if ( archivoGrafico.is_open() ) {
+        while ( archivoGrafico.good() ) {
+            archivoGrafico >> usuario;
+            archivoGrafico >> fecha;
+            archivoGrafico >> nroGrafico;
+            archivoGrafico >> polinomio;
+            graficos[nroGrafico] = polinomio;
+        }
+    }
+    archivoGrafico.close();
+
+    cout << "Escriba el numero de referencia del grafico a imprimir: ";
+    cin >> referencia;
+
+    if(graficos.count(referencia)){
+        cout << "Polinomio: " << graficos[referencia] << endl << endl;
+        system("pause");
+        // TODO pintar grafico
+    } else {
+        cout << "No se encuntra el grafico." << endl;
+        system("pause");
+    }
+
+}
+
 // Opcion 6
 map<string, string> cambiarPassword(map<string, string> users, string usr){
     string pwd, newPwd1, newPwd2;
     pwd = leerPassword("Password root: ");
+    // TODO Encriptar password
     if(users[usr] == pwd){
         newPwd1 = leerPassword("Ingrese el nuevo password: ");
         newPwd2 = leerPassword("Confirme el nuevo Password: ");
         if(newPwd1 == newPwd2 && newPwd1.length() > 3){
+            // TODO Encriptar nueva password
             users[usr] = newPwd1;
             fstream fs;
             fs.open ("usuarios.txt", fstream::in | fstream::out | fstream::trunc);
@@ -203,6 +332,7 @@ map<string, string> cambiarPasswordUsuario(map<string, string> users){
         newPwd1 = leerPassword("Ingrese el nuevo password: ");
         newPwd2 = leerPassword("Confirme el nuevo Password: ");
         if(newPwd1 == newPwd2 && newPwd1.length() > 3){
+            // TODO encriptar Password
             users[usr] = newPwd1;
             fstream fs;
             fs.open ("usuarios.txt", fstream::in | fstream::out | fstream::trunc);
@@ -249,7 +379,7 @@ void pintarMenuUsuario(map<string, string> users, string usr){
                 system("pause");
                 break;
             case 1:
-                crearGrafico();
+                crearGrafico(usr);
                 break;
             case 2:
                 borrarGrafico();
@@ -258,6 +388,7 @@ void pintarMenuUsuario(map<string, string> users, string usr){
                 listarAccesos(usr);
                 break;
             case 4:
+                imprimirGrafico(usr);
                 break;
             case 5:
                 users = cambiarPassword(users, usr);
@@ -270,16 +401,17 @@ void pintarMenuUsuario(map<string, string> users, string usr){
 }
 
 // opcion 1 usuarios
-void crearGrafico(){
-    string fecha, nroGrafico, polinomio;
+void crearGrafico(string usr){
+    string usuario, fecha, nroGrafico, polinomio;
     map<string, string> graficos;
     ifstream archivoGrafico ("graficos.txt");
     if ( archivoGrafico.is_open() ) {
         while ( archivoGrafico.good() ) {
+            archivoGrafico >> usuario;
             archivoGrafico >> fecha;
             archivoGrafico >> nroGrafico;
             archivoGrafico >> polinomio;
-            graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+            graficos[nroGrafico] = usuario + " " + fecha + " " + nroGrafico + " " + polinomio;
         }
     }
     archivoGrafico.close();
@@ -288,31 +420,25 @@ void crearGrafico(){
     nroGrafico = secuenciaGrafico(graficos);
     cout << "Polinomio (Sin espacios en blanco): ";
     cin >> polinomio;
-    // TODO validar Polinomio
-    graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
-    /*for (pair<string, string> it : graficos) {
-        cout << it.first << ": " << it.second << endl;
-    }*/
-    fstream fs;
-    fs.open ("graficos.txt", fstream::in | fstream::out | fstream::trunc);
-    ofstream archivoGraficoW ("graficos.txt");
-    for (pair<string, string> it : graficos) {
-        archivoGraficoW << it.second << endl;
-    }
-    archivoGraficoW.close();
+    // TODO validar Polinomio (Sin espacios en blanco)
+    graficos[nroGrafico] = usr + " " + fecha + " " + nroGrafico + " " + polinomio;
+    escribirArchivoGraficos(graficos);
+    cout << "Grafico creado con exito." << endl;
+    system("pause");
 }
 
 // opcion 2 Usuarios
 void borrarGrafico(){
-    string fecha, nroGrafico, polinomio, referencia;
+    string usuario, fecha, nroGrafico, polinomio, referencia;
     map<string, string> graficos;
     ifstream archivoGrafico ("graficos.txt");
     if ( archivoGrafico.is_open() ) {
         while ( archivoGrafico.good() ) {
+            archivoGrafico >> usuario;
             archivoGrafico >> fecha;
             archivoGrafico >> nroGrafico;
             archivoGrafico >> polinomio;
-            graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+            graficos[nroGrafico] = usuario + " " + fecha + " " + nroGrafico + " " + polinomio;
         }
     }
     archivoGrafico.close();
@@ -334,15 +460,18 @@ void borrarGrafico(){
 // opcion 3 Usuarios
 void listarAccesos(string usr){
     system("cls");
-    string fecha, nroGrafico, polinomio, orden;
+    string usuario, fecha, nroGrafico, polinomio, orden;
     map<string, string> graficos;
     ifstream archivoGrafico ("graficos.txt");
     if ( archivoGrafico.is_open() ) {
         while ( archivoGrafico.good() ) {
+            archivoGrafico >> usuario;
             archivoGrafico >> fecha;
             archivoGrafico >> nroGrafico;
             archivoGrafico >> polinomio;
-            graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+            if(usuario == usr){
+                graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+            }
         }
     }
     archivoGrafico.close();
@@ -355,9 +484,13 @@ void listarAccesos(string usr){
         cout << endl << "Listado de accesos ordenado ascendente (0-9) por fecha" << endl; 
         cout << "Fecha Nro grafico Polinomio-F(x)" << endl;
         cout << "________________________________" << endl;
-        graficos = ordenarGraficosFechaAsc(graficos);
-        for (pair<string, string> it : graficos) {
-            cout << it.second << endl;
+        if(graficos.empty()){
+            cout << "No existen registros." << endl;
+        }else{
+            graficos = ordenarGraficosFechaAsc(graficos);
+            for (pair<string, string> it : graficos) {
+                cout << it.second << endl;
+            }
         }
         cout << "--------------------------------" << endl;
         cout << graficos.size() << " Registros" << endl;
@@ -366,9 +499,13 @@ void listarAccesos(string usr){
         cout << endl << "Listado de accesos ordenado descendente (0-9) por fecha" << endl; 
         cout << "Fecha Nro grafico Polinomio-F(x)" <<endl;
         cout << "________________________________" <<endl;
-        graficos = ordenarGraficosFechaDes(graficos);
-        for (pair<string, string> it : graficos) {
-            cout << it.second << endl;
+        if(graficos.empty()){
+                cout << "No existen registros." << endl;
+        }else{
+            graficos = ordenarGraficosFechaDes(graficos);
+            for (pair<string, string> it : graficos) {
+                cout << it.second << endl;
+            }
         }
         cout << "--------------------------------" << endl;
         cout << graficos.size() << " Registros" << endl;
@@ -377,6 +514,38 @@ void listarAccesos(string usr){
         cout << "Opcion no valida." << endl;
     }
     system("pause"); 
+}
+
+// opcion 4 usuarios
+void imprimirGrafico(string usr){
+    string usuario, fecha, nroGrafico, polinomio, referencia;
+    map<string, string> graficos;
+    ifstream archivoGrafico ("graficos.txt");
+    if ( archivoGrafico.is_open() ) {
+        while ( archivoGrafico.good() ) {
+            archivoGrafico >> usuario;
+            archivoGrafico >> fecha;
+            archivoGrafico >> nroGrafico;
+            archivoGrafico >> polinomio;
+            if(usr == usuario || usr == "root"){
+                graficos[nroGrafico] = polinomio;
+            }
+        }
+    }
+    archivoGrafico.close();
+
+    cout << "Escriba el numero de referencia del grafico a imprimir: ";
+    cin >> referencia;
+
+    if(graficos.count(referencia)){
+        cout << "Polinomio: " << graficos[referencia] << endl << endl;
+        system("pause");
+        // TODO pintar grafico
+    } else {
+        cout << "No se encuntra el grafico." << endl;
+        system("pause");
+    }
+
 }
 
 map<string, string> ordenarGraficosFechaDes(map<string, string> graficos){
@@ -503,7 +672,6 @@ bool validarEntrada(string cadena){
 
 string login(map<string, string> users){
     string usr, pwd;
-
     cout << "Username: ";
     cin >> usr;
     if(users.empty()) {
@@ -512,6 +680,7 @@ string login(map<string, string> users){
             if(pwd.length() < 4){
                 cout << "El password debe contener minimo 4 caracteres";
             }else {
+                //  TODO encriptar password
                 ofstream archivoUsuariosW ("usuarios.txt");
                 archivoUsuariosW << usr << " " << pwd;
                 archivoUsuariosW.close();
@@ -542,6 +711,7 @@ string validarUsr(map<string, string> users, int i){
 
     if(users.count(usr)){
         pwd = leerPassword("Password: ");
+        // TODO Encriptar Password
         if(users[usr] == pwd){
             return usr;
         }
@@ -580,16 +750,6 @@ map<string, string> cargarUsuarios(){
         }
     }
     archivoUsuarios.close();
-
-    /*
-    if(users.empty()){
-        cout << "Mapa Vacio" << endl;
-    }
-
-    for (pair<string, string> it : users) {
-        cout << it.first << " - " << it.second << endl;
-    }
-    */
     return users;
 }
 
