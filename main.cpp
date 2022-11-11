@@ -7,6 +7,8 @@
 #include <conio.h>
 #include <Windows.h>
 #include <sstream>
+#include <iomanip>
+#include <ctime>
 
 //#include <SDL2/SDL.h>
 #define CP_UTF8 65001
@@ -25,6 +27,14 @@ map<string, string> cambiarPassword(map<string, string> users, string usr);
 map<string, string> cambiarPasswordUsuario(map<string, string> users);
 map<string, string> crearUsuario(map<string, string> users);
 map<string, string> borrarUsuario(map<string, string> users);
+string getFecha();
+string secuenciaGrafico(map<string, string> graficos);
+void crearGrafico();
+void borrarGrafico();
+void listarAccesos(string usr);
+void escribirArchivoGraficos(map<string, string> graficos);
+map<string, string> ordenarGraficosFechaAsc(map<string, string> graficos);
+map<string, string> ordenarGraficosFechaDes(map<string, string> graficos);
 
 // Constantes
 const int WIDTH = 800, HEIGHT = 600;
@@ -35,29 +45,20 @@ int main( int argc, char *argv[] )
 {
     map<string, string> users = cargarUsuarios();
     cout << "Aplicativo - Graficador - UTP" << endl;
-    
-    
-    pintarMenuUsuario(users, "ricardo");
-    return EXIT_SUCCESS;
-    
-    
     string usr;
     usr = login(users);
     if(usr != ""){
-        cout << "Usario OK";
         if(usr == "root"){
             pintarMenuRoot(users);
         } else {
             pintarMenuUsuario(users, usr);
         }
     }else{
-        cout << "Usario Not OK";
         system("pause");
     }
-    
-    //abirirVentana();
     return EXIT_SUCCESS;
 }
+
 
 void pintarMenuRoot(map<string, string> users){
     int option=10;
@@ -101,47 +102,6 @@ void pintarMenuRoot(map<string, string> users){
                 break;
             case 7:
                 users = cambiarPasswordUsuario(users);
-                break;
-            default:
-                cout << "Opcion no valida" << endl;
-                system("pause");
-        }
-    }
-}
-
-void pintarMenuUsuario(map<string, string> users, string usr){
-    int option=10;
-    string entrada;
-    while (option != 0){
-        system("cls");
-        cout << "Aplicativo - Graficador - UTP" << endl;
-        cout << "Men" <<cu<< " principal para usuario: "<< usr << endl;
-        cout << "0. Salir del aplicativo" << endl;
-        cout << "1. Crear un nuevo gr" << ca << "fico" << endl;
-        cout << "2. Borrar un gr" << ca << "fico existente" << endl;
-        cout << "3. Listar accesos" << endl;
-        cout << "4. Imprimir gr" << ca << "fico por referencia (Si es suyo)" << endl;
-        cout << "5. Cambiar password del usuario " <<usr << endl;
-        cout << "Digite la opcion deseada: ";
-        cin >> entrada;
-        if(validarEntrada(entrada)){
-            option = stoi(entrada);
-        }
-        switch(option) {
-            case 0:
-                cout << usr << ": Gracias por utilizar el aplicativo." << endl;
-                system("pause");
-                break;
-            case 1:
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            case 5:
-                users = cambiarPassword(users, usr);
                 break;
             default:
                 cout << "Opcion no valida" << endl;
@@ -263,6 +223,271 @@ map<string, string> cambiarPasswordUsuario(map<string, string> users){
         system("pause");
     }
     return users;
+}
+
+void pintarMenuUsuario(map<string, string> users, string usr){
+    int option=10;
+    string entrada;
+    while (option != 0){
+        system("cls");
+        cout << "Aplicativo - Graficador - UTP" << endl;
+        cout << "Men" <<cu<< " principal para usuario: "<< usr << endl;
+        cout << "0. Salir del aplicativo" << endl;
+        cout << "1. Crear un nuevo gr" << ca << "fico" << endl;
+        cout << "2. Borrar un gr" << ca << "fico existente" << endl;
+        cout << "3. Listar accesos" << endl;
+        cout << "4. Imprimir gr" << ca << "fico por referencia (Si es suyo)" << endl;
+        cout << "5. Cambiar password del usuario " <<usr << endl;
+        cout << "Digite la opcion deseada: ";
+        cin >> entrada;
+        if(validarEntrada(entrada)){
+            option = stoi(entrada);
+        }
+        switch(option) {
+            case 0:
+                cout << usr << ": Gracias por utilizar el aplicativo." << endl;
+                system("pause");
+                break;
+            case 1:
+                crearGrafico();
+                break;
+            case 2:
+                borrarGrafico();
+                break;
+            case 3:
+                listarAccesos(usr);
+                break;
+            case 4:
+                break;
+            case 5:
+                users = cambiarPassword(users, usr);
+                break;
+            default:
+                cout << "Opcion no valida" << endl;
+                system("pause");
+        }
+    }
+}
+
+// opcion 1 usuarios
+void crearGrafico(){
+    string fecha, nroGrafico, polinomio;
+    map<string, string> graficos;
+    ifstream archivoGrafico ("graficos.txt");
+    if ( archivoGrafico.is_open() ) {
+        while ( archivoGrafico.good() ) {
+            archivoGrafico >> fecha;
+            archivoGrafico >> nroGrafico;
+            archivoGrafico >> polinomio;
+            graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+        }
+    }
+    archivoGrafico.close();
+
+    fecha = getFecha();
+    nroGrafico = secuenciaGrafico(graficos);
+    cout << "Polinomio (Sin espacios en blanco): ";
+    cin >> polinomio;
+    // TODO validar Polinomio
+    graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+    /*for (pair<string, string> it : graficos) {
+        cout << it.first << ": " << it.second << endl;
+    }*/
+    fstream fs;
+    fs.open ("graficos.txt", fstream::in | fstream::out | fstream::trunc);
+    ofstream archivoGraficoW ("graficos.txt");
+    for (pair<string, string> it : graficos) {
+        archivoGraficoW << it.second << endl;
+    }
+    archivoGraficoW.close();
+}
+
+// opcion 2 Usuarios
+void borrarGrafico(){
+    string fecha, nroGrafico, polinomio, referencia;
+    map<string, string> graficos;
+    ifstream archivoGrafico ("graficos.txt");
+    if ( archivoGrafico.is_open() ) {
+        while ( archivoGrafico.good() ) {
+            archivoGrafico >> fecha;
+            archivoGrafico >> nroGrafico;
+            archivoGrafico >> polinomio;
+            graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+        }
+    }
+    archivoGrafico.close();
+
+    cout << "Escriba el numero de referencia del grafico a borrar: ";
+    cin >> referencia;
+
+    if(graficos.count(referencia)){
+        graficos.erase(referencia);
+        escribirArchivoGraficos(graficos);
+        cout << "Grafico borrado con exito." << endl;
+        system("pause");
+    } else {
+        cout << "No se encuntra el grafico." << endl;
+        system("pause");
+    }
+}
+
+// opcion 3 Usuarios
+void listarAccesos(string usr){
+    system("cls");
+    string fecha, nroGrafico, polinomio, orden;
+    map<string, string> graficos;
+    ifstream archivoGrafico ("graficos.txt");
+    if ( archivoGrafico.is_open() ) {
+        while ( archivoGrafico.good() ) {
+            archivoGrafico >> fecha;
+            archivoGrafico >> nroGrafico;
+            archivoGrafico >> polinomio;
+            graficos[nroGrafico] = fecha + " " + nroGrafico + " " + polinomio;
+        }
+    }
+    archivoGrafico.close();
+
+    cout << "Aplicativo - Graficador - UTP" << endl;
+    cout << "Modulo listar accesos - Usuario: " << usr << endl;
+    cout << "Ordenar por fecha. Presione(1) Orden ascendente (2) Orden Descendente:";
+    cin >> orden;
+    if(orden == "1"){
+        cout << endl << "Listado de accesos ordenado ascendente (0-9) por fecha" << endl; 
+        cout << "Fecha Nro grafico Polinomio-F(x)" << endl;
+        cout << "________________________________" << endl;
+        graficos = ordenarGraficosFechaAsc(graficos);
+        for (pair<string, string> it : graficos) {
+            cout << it.second << endl;
+        }
+        cout << "--------------------------------" << endl;
+        cout << graficos.size() << " Registros" << endl;
+        cout << endl;
+    } else if(orden == "2"){
+        cout << endl << "Listado de accesos ordenado descendente (0-9) por fecha" << endl; 
+        cout << "Fecha Nro grafico Polinomio-F(x)" <<endl;
+        cout << "________________________________" <<endl;
+        graficos = ordenarGraficosFechaDes(graficos);
+        for (pair<string, string> it : graficos) {
+            cout << it.second << endl;
+        }
+        cout << "--------------------------------" << endl;
+        cout << graficos.size() << " Registros" << endl;
+        cout << endl;
+    } else{
+        cout << "Opcion no valida." << endl;
+    }
+    system("pause"); 
+}
+
+map<string, string> ordenarGraficosFechaDes(map<string, string> graficos){
+    map<string, string> graficosSalida;
+    string entrada[graficos.size()][3];
+    string aux_elem1,aux_elem2,aux_elem3;
+    int i = 0;
+    for (pair<string, string> it : graficos) {
+        entrada[i][0] = it.second.substr(0, 10);
+        entrada[i][1] = it.second.substr(11, 4);
+        entrada[i][2] = it.second.substr(16, it.second.length()-16);
+        i++;
+    }
+
+    for (int i = 0; i < graficos.size() - 1; i++){
+        for (int j = 1; j < graficos.size(); j++){
+            if (entrada[j][0] > entrada[j-1][0]){   
+                aux_elem1 = entrada[j][0];
+                aux_elem2 = entrada[j][1];
+                aux_elem3 = entrada[j][2];
+                entrada[j][0] = entrada[j-1][0];
+                entrada[j][1] = entrada[j-1][1];
+                entrada[j][2] = entrada[j-1][2];
+                entrada[j-1][0] = aux_elem1;
+                entrada[j-1][1] = aux_elem2;
+                entrada[j-1][2] = aux_elem3;
+            }
+        }
+    }
+
+    for (size_t i = 0; i < graficos.size(); i++){
+        graficosSalida[to_string(i)] = entrada[i][0] + " " + entrada[i][1] + " " + entrada[i][2];
+    }
+    return graficosSalida;
+}
+
+map<string, string> ordenarGraficosFechaAsc(map<string, string> graficos){
+    map<string, string> graficosSalida;
+    string entrada[graficos.size()][3];
+    string aux_elem1,aux_elem2,aux_elem3;
+    int i = 0;
+    for (pair<string, string> it : graficos) {
+        entrada[i][0] = it.second.substr(0, 10);
+        entrada[i][1] = it.second.substr(11, 4);
+        entrada[i][2] = it.second.substr(16, it.second.length()-16);
+        i++;
+    }
+
+    for (int i = 0; i < graficos.size() - 1; i++){
+        for (int j = 1; j < graficos.size(); j++){
+            if (entrada[j][0] < entrada[j-1][0]){   
+                aux_elem1 = entrada[j][0];
+                aux_elem2 = entrada[j][1];
+                aux_elem3 = entrada[j][2];
+                entrada[j][0] = entrada[j-1][0];
+                entrada[j][1] = entrada[j-1][1];
+                entrada[j][2] = entrada[j-1][2];
+                entrada[j-1][0] = aux_elem1;
+                entrada[j-1][1] = aux_elem2;
+                entrada[j-1][2] = aux_elem3;
+            }
+        }
+    }
+
+    for (size_t i = 0; i < graficos.size(); i++){
+        graficosSalida[to_string(i)] = entrada[i][0] + " " + entrada[i][1] + " " + entrada[i][2];
+    }
+    return graficosSalida;
+}
+
+void escribirArchivoGraficos(map<string, string> graficos){
+    fstream fs;
+    fs.open ("graficos.txt", fstream::in | fstream::out | fstream::trunc);
+    ofstream archivoGraficoW ("graficos.txt");
+    for (pair<string, string> it : graficos) {
+        archivoGraficoW << it.second << endl;
+    }
+    archivoGraficoW.close();
+}
+
+string secuenciaGrafico(map<string, string> graficos){
+    int grafico;
+    int mayor = 1;
+    string salida;
+    for (pair<string, string> it : graficos) {
+        grafico = stoi(it.first);
+        if(grafico > mayor){
+            mayor = grafico;
+        }
+    }
+    salida = to_string(mayor+1);
+    if(salida.length() < 4){
+        salida = "0" + salida;
+    }
+    if(salida.length() < 4){
+        salida = "0" + salida;
+    }
+    if(salida.length() < 4){
+        salida = "0" + salida;
+    }
+    return salida;
+}
+
+string getFecha(){
+    auto t = time(nullptr);
+    auto tm = *localtime(&t);
+
+    ostringstream oss;
+    oss << put_time(&tm, "%Y-%m-%d");
+    string str = oss.str();
+    return str;
 }
 
 bool validarEntrada(string cadena){
